@@ -2,6 +2,13 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 
+const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => resolve(reader.result);
+  reader.onerror = () => reject(new Error(`Failed to read file: ${file.name}`));
+  reader.readAsDataURL(file);
+});
+
 function PostForm({ onClose, editPost }) {
   const { user } = useAuth();
   const { createPost, updatePost } = useData();
@@ -12,6 +19,7 @@ function PostForm({ onClose, editPost }) {
     hint: editPost.hint || '',
     deadline: editPost.deadline ? editPost.deadline.slice(0, 16) : '',
     tags: editPost.tags?.join(', ') || '',
+    attachments: editPost.attachments || [],
   } : {
     type: 'puzzle',
     title: '',
@@ -19,14 +27,46 @@ function PostForm({ onClose, editPost }) {
     hint: '',
     deadline: '',
     tags: '',
+    attachments: [],
   });
   const [error, setError] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const handleFileChange = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setUploading(true);
+    setError('');
+    try {
+      const uploaded = await Promise.all(files.map(async (file) => ({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        name: file.name,
+        type: file.type || 'application/octet-stream',
+        size: file.size,
+        dataUrl: await readFileAsDataUrl(file),
+      })));
+      setForm(prev => ({ ...prev, attachments: [...prev.attachments, ...uploaded] }));
+    } catch {
+      setError('Failed to attach one or more files');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const removeAttachment = (id) => {
+    setForm(prev => ({ ...prev, attachments: prev.attachments.filter(a => a.id !== id) }));
+  };
 
   const handleSave = () => {
     if (!form.title.trim() || !form.content.trim()) {
       setError('Title and content are required');
+      return;
+    }
+    if (uploading) {
+      setError('Please wait for files to finish uploading');
       return;
     }
     const data = {
@@ -36,6 +76,7 @@ function PostForm({ onClose, editPost }) {
       hint: form.hint.trim() || null,
       deadline: form.deadline ? new Date(form.deadline).toISOString() : null,
       tags: form.tags ? form.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+      attachments: form.attachments || [],
       authorId: user.id,
       authorName: user.displayName,
     };
@@ -115,6 +156,34 @@ function PostForm({ onClose, editPost }) {
             <input id="pf-tags" className="ms-input" value={form.tags} onChange={e => set('tags', e.target.value)} placeholder="e.g. number theory, combinatorics" />
           </div>
 
+          <div>
+            <label className="ms-label" htmlFor="pf-files">Attachments (PDF or files)</label>
+            <input id="pf-files" type="file" multiple onChange={handleFileChange} style={{ display: 'none' }} />
+            <label
+              htmlFor="pf-files"
+              className="ms-btn-ghost ms-btn-ghost--sm"
+              style={{ display: 'inline-block', padding: '10px 14px', cursor: uploading ? 'not-allowed' : 'pointer', opacity: uploading ? 0.7 : 1 }}
+            >
+              {uploading ? 'Uploading...' : 'Upload files'}
+            </label>
+            <div style={{ marginTop: '8px', color: 'var(--ms-muted-3)', fontSize: '12px' }}>
+              PDF, images, and documents supported
+            </div>
+            {uploading && <div style={{ marginTop: '8px', color: 'var(--ms-muted-3)', fontSize: '12px' }}>Uploading files...</div>}
+            {form.attachments.length > 0 && (
+              <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {form.attachments.map(file => (
+                  <div key={file.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', alignItems: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--ms-border-subtle)', borderRadius: 'var(--ms-radius-sm)', padding: '8px 10px' }}>
+                    <span style={{ color: 'var(--ms-muted)', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {file.name}
+                    </span>
+                    <button type="button" className="ms-btn-ghost ms-btn-ghost--sm" onClick={() => removeAttachment(file.id)}>Remove</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {error && <div className="ms-alert-error">{error}</div>}
 
           <div className="ms-row-actions" style={{ marginTop: '8px' }}>
@@ -188,8 +257,15 @@ function PostsTab() {
   const [showForm, setShowForm] = useState(false);
   const [editPost, setEditPost] = useState(null);
   const [viewSubs, setViewSubs] = useState(null);
+  const [zoomedImage, setZoomedImage] = useState(null);
 
   const TYPE_COLORS = { puzzle: '#8fd4f0', challenge: 'var(--ms-gold)', fact: '#c4b0f0' };
+  const isPdfFile = (file) => {
+    const type = String(file?.type || '').toLowerCase();
+    const name = String(file?.name || '').toLowerCase();
+    return type.includes('pdf') || name.endsWith('.pdf');
+  };
+  const isImageFile = (file) => String(file?.type || '').toLowerCase().startsWith('image/');
 
   return (
     <div>
@@ -228,16 +304,45 @@ function PostsTab() {
               )}
             </div>
             <h3 className="ms-post-card__title" style={{ fontSize: '17px', marginBottom: '6px' }}>{post.title}</h3>
-            <p style={{ color: 'var(--ms-muted-2)', fontSize: '13px', margin: '0 0 8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--ms-font-ui)' }}>
-              {post.content.slice(0, 90)}{post.content.length > 90 ? '…' : ''}
+            <p style={{ color: 'var(--ms-muted-2)', fontSize: '13px', margin: '0 0 8px', whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'var(--ms-font-ui)' }}>
+              {post.content}
             </p>
+            {post.attachments?.length > 0 && (
+              <div style={{ margin: '0 0 10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {post.attachments.map(file => (
+                  <div key={file.id} style={{ border: '1px solid var(--ms-border-subtle)', borderRadius: 'var(--ms-radius-sm)', overflow: 'hidden', background: 'rgba(255,255,255,0.02)' }}>
+                    <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--ms-border-subtle)', color: 'var(--ms-muted-2)', fontSize: '12px', fontFamily: 'var(--ms-font-ui)' }}>
+                      Attachment: {file.name}
+                    </div>
+                    {isPdfFile(file) ? (
+                      <iframe
+                        title={`director-pdf-${post.id}-${file.id}`}
+                        src={file.dataUrl}
+                        style={{ width: '100%', height: '760px', border: 'none', background: '#111' }}
+                      />
+                    ) : isImageFile(file) ? (
+                      <img
+                        src={file.dataUrl}
+                        alt={file.name}
+                        onClick={() => setZoomedImage({ src: file.dataUrl, name: file.name })}
+                        style={{ width: '100%', maxHeight: '760px', objectFit: 'contain', display: 'block', background: '#111', cursor: 'zoom-in' }}
+                      />
+                    ) : (
+                      <div style={{ padding: '12px', color: 'var(--ms-muted-3)', fontSize: '12px', fontFamily: 'var(--ms-font-ui)' }}>
+                        Preview not available for this file type
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
             <span className="ms-post-card__meta">
               {new Date(post.createdAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
               {post.submissions.length > 0 && ` · ${post.submissions.length} submission${post.submissions.length !== 1 ? 's' : ''}`}
             </span>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', flexShrink: 0, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '8px', flexShrink: 0, flexDirection: 'column', alignItems: 'stretch' }}>
             {post.type !== 'fact' && (
               <button
                 type="button"
@@ -270,6 +375,25 @@ function PostsTab() {
 
       {showForm && <PostForm onClose={() => setShowForm(false)} editPost={editPost} />}
       {viewSubs && <SubmissionsModal post={viewSubs} onClose={() => setViewSubs(null)} />}
+      {zoomedImage && (
+        <div
+          onClick={() => setZoomedImage(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
+        >
+          <div style={{ maxWidth: '95vw', maxHeight: '95vh', width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#ddd', fontSize: '12px', fontFamily: 'var(--ms-font-ui)' }}>
+              <span>{zoomedImage.name}</span>
+              <button type="button" onClick={() => setZoomedImage(null)} className="ms-btn-ghost ms-btn-ghost--sm">Close</button>
+            </div>
+            <img
+              src={zoomedImage.src}
+              alt={zoomedImage.name}
+              onClick={e => e.stopPropagation()}
+              style={{ width: '100%', maxHeight: '88vh', objectFit: 'contain', borderRadius: 'var(--ms-radius-sm)', background: '#111' }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -301,26 +425,29 @@ function MembersTab() {
       <div className="ms-table-wrap">
         <div className="ms-table-head">
           <span>Name</span>
+          <span>Role</span>
           <span>Username</span>
           <span>Email</span>
-          <span>Role</span>
         </div>
         {users.map(u => (
           <div key={u.id} className="ms-table-row">
             <span style={{ color: 'var(--ms-cream-soft)', fontSize: '14px', fontFamily: 'var(--ms-font-ui)' }}>{u.displayName}</span>
-            <span style={{ color: 'var(--ms-muted-2)', fontSize: '13px', fontFamily: 'var(--ms-font-ui)' }}>@{u.username}</span>
-            <span style={{ color: 'var(--ms-muted-3)', fontSize: '12px', fontFamily: 'var(--ms-font-ui)' }}>{u.email}</span>
             <span
               className="ms-type-pill"
               style={{
-                justifySelf: 'end',
+                justifySelf: 'center',
+                display: 'inline-block',
                 background: u.role === 'director' ? 'rgba(212,175,55,0.14)' : 'rgba(126,207,160,0.1)',
                 color: u.role === 'director' ? 'var(--ms-gold)' : '#8fd4b0',
                 borderColor: u.role === 'director' ? 'rgba(212,175,55,0.25)' : 'rgba(126,207,160,0.25)',
+                padding: '4px 8px',
+                letterSpacing: '0.1em',
               }}
             >
-              {u.role}
+              {u.role === 'director' ? 'Academics Director' : 'Member'}
             </span>
+            <span style={{ color: 'var(--ms-muted-2)', fontSize: '13px', fontFamily: 'var(--ms-font-ui)' }}>@{u.username}</span>
+            <span style={{ color: 'var(--ms-muted-3)', fontSize: '12px', fontFamily: 'var(--ms-font-ui)' }}>{u.email}</span>
           </div>
         ))}
       </div>
@@ -339,7 +466,7 @@ export default function DirectorDashboard({ onLogout }) {
       <nav className="ms-nav">
         <div className="ms-nav__brand">
           <span className="ms-nav__title">MathSoc</span>
-          <span className="ms-nav__badge--pill">Director</span>
+          <span className="ms-nav__badge--pill">Academics Director</span>
         </div>
         <div className="ms-nav__actions">
           <span className="ms-nav__user" style={{ color: 'var(--ms-muted-2)' }}>{user.displayName}</span>
