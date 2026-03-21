@@ -25,9 +25,9 @@ function TimeRemaining({ deadline }) {
 }
 
 const TYPE_CONFIG = {
-  puzzle: { label: 'Puzzle', color: '#8fd4f0', bg: 'rgba(126,200,227,0.12)', border: 'rgba(143,212,240,0.4)', icon: '🧩' },
-  fact: { label: 'Math Fact', color: '#c4b0f0', bg: 'rgba(184,160,232,0.12)', border: 'rgba(196,176,240,0.4)', icon: '💡' },
-  challenge: { label: 'Challenge', color: '#e8c547', bg: 'rgba(212,175,55,0.14)', border: 'rgba(212,175,55,0.45)', icon: '🏆' },
+  puzzle: { label: 'Puzzle', color: '#8fd4f0', bg: 'rgba(126,200,227,0.12)', border: 'rgba(143,212,240,0.4)', icon: '' },
+  fact: { label: 'Math Fact', color: '#c4b0f0', bg: 'rgba(184,160,232,0.12)', border: 'rgba(196,176,240,0.4)', icon: '' },
+  challenge: { label: 'Challenge', color: '#e8c547', bg: 'rgba(212,175,55,0.14)', border: 'rgba(212,175,55,0.45)', icon: '' },
 };
 
 function PostCard({ post, userId, username }) {
@@ -58,7 +58,7 @@ function PostCard({ post, userId, username }) {
               borderColor: typeConfig.border,
             }}
           >
-            {typeConfig.icon} {typeConfig.label}
+            {typeConfig.icon ? `${typeConfig.icon} ` : ''}{typeConfig.label}
           </span>
           {post.tags?.map(tag => (
             <span key={tag} style={{ color: 'var(--ms-muted-3)', fontSize: '11px', fontFamily: 'var(--ms-font-ui)' }}>
@@ -90,7 +90,7 @@ function PostCard({ post, userId, username }) {
       )}
 
       {expanded && post.hint && (
-        <div className="ms-hint-block">💡 Hint: {post.hint}</div>
+        <div className="ms-hint-block">Hint: {post.hint}</div>
       )}
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
@@ -103,7 +103,7 @@ function PostCard({ post, userId, username }) {
           <div>
             {existingSub ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#8fd4b0', fontSize: '12px', fontFamily: 'var(--ms-font-ui)' }}>
-                <span>✓ Answer submitted</span>
+                <span>Answer submitted</span>
                 <button
                   type="button"
                   className="ms-btn-ghost ms-btn-ghost--sm"
@@ -198,7 +198,7 @@ export default function PublicFeed({ onLogout }) {
             className={`ms-chip ${filter === f ? 'ms-chip--active' : ''}`}
             onClick={() => setFilter(f)}
           >
-            {f === 'all' ? 'All' : f === 'puzzle' ? '🧩 Puzzles' : f === 'challenge' ? '🏆 Challenges' : '💡 Facts'}
+            {f === 'all' ? 'All' : f === 'puzzle' ? 'Puzzles' : f === 'challenge' ? 'Challenges' : 'Facts'}
           </button>
         ))}
       </div>

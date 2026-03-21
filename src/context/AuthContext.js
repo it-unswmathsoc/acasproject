@@ -6,9 +6,36 @@ const AuthContext = createContext(null);
 const DEFAULT_USERS = [
   {
     id: '1',
-    username: 'acad_director',
+    username: 'Jenny Weng',
     email: 'academics@mathsoc.com',
-    password: 'mathsoc2024',
+    password: 'mathsocrox',
+    role: 'director',
+    displayName: 'Academics Director',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: '2',
+    username: 'Jimmy Sun',
+    email: 'academics@mathsoc.com',
+    password: 'mathsocrox',
+    role: 'director',
+    displayName: 'Academics Director',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: '3',
+    username: 'Thomas Liao',
+    email: 'academics@mathsoc.com',
+    password: 'mathsocrox',
+    role: 'director',
+    displayName: 'Academics Director',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: '4',
+    username: 'directortest',
+    email: 'academics@mathsoc.com',
+    password: 'mathsocrox',
     role: 'director',
     displayName: 'Academics Director',
     createdAt: new Date().toISOString(),
@@ -19,7 +46,21 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [users, setUsers] = useState(() => {
     const stored = localStorage.getItem('mathsoc_users');
-    return stored ? JSON.parse(stored) : DEFAULT_USERS;
+    if (!stored) return DEFAULT_USERS;
+    try {
+      const parsed = JSON.parse(stored);
+      if (!Array.isArray(parsed)) return DEFAULT_USERS;
+
+      // Keep stored users, but ensure seeded defaults still exist.
+      const byUsername = new Map(parsed.map(u => [String(u.username || '').toLowerCase(), u]));
+      for (const seed of DEFAULT_USERS) {
+        const key = String(seed.username || '').toLowerCase();
+        if (!byUsername.has(key)) byUsername.set(key, seed);
+      }
+      return Array.from(byUsername.values());
+    } catch {
+      return DEFAULT_USERS;
+    }
   });
 
   useEffect(() => {
@@ -32,8 +73,15 @@ export function AuthProvider({ children }) {
   }, [users]);
 
   const login = (identifier, password) => {
+    const normalizedId = String(identifier || '').trim().toLowerCase();
+    const normalizedPass = String(password || '').trim();
     const found = users.find(
-      u => (u.username === identifier || u.email === identifier) && u.password === password
+      u =>
+        (
+          String(u.username || '').toLowerCase() === normalizedId ||
+          String(u.email || '').toLowerCase() === normalizedId
+        ) &&
+        String(u.password || '') === normalizedPass
     );
     if (!found) return { error: 'Invalid credentials' };
     const { password: _, ...safeUser } = found;

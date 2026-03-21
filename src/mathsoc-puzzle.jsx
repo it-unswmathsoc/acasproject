@@ -456,7 +456,7 @@ export default function App() {
       answer, mode, submittedAt: new Date().toISOString(),
     };
     setState(s => ({ ...s, submissions: [...s.submissions, sub] }));
-    showToast("Answer submitted! Good luck. 🎉");
+    showToast("Answer submitted! Good luck.");
   };
 
   const updateQuestion = (q) => {
@@ -578,7 +578,7 @@ function QuestionCard({ question }) {
           </div>
         </div>
         <div className={`deadline-badge ${isUrgent && tl !== "Closed" ? "urgent" : ""}`}>
-          {tl === "Closed" ? "⛔ Closed" : `⏳ ${tl}`}
+          {tl === "Closed" ? "Closed" : `${tl}`}
         </div>
       </div>
       <div className="qcard-body">
@@ -587,7 +587,7 @@ function QuestionCard({ question }) {
         </div>
         {question.funFact && (
           <div className="fun-fact-box">
-            <div className="fun-fact-label">✦ Fun Fact</div>
+            <div className="fun-fact-label">Fun Fact</div>
             <LatexRender src={question.funFact} />
           </div>
         )}
@@ -599,7 +599,7 @@ function QuestionCard({ question }) {
                 onClick={() => setShowHint(true)}
                 style={{ marginTop: "1.25rem", background: "var(--cream)", color: "var(--ink)", padding: "8px 16px", borderRadius: "2px", fontSize: "0.82rem", border: "1px solid var(--border)" }}
               >
-                🔍 Reveal hint
+                Reveal hint
               </button>
             ) : (
               <div className="hint-box">
@@ -657,7 +657,7 @@ function AnswerArea({ question, currentUser, mySubmission, onSubmit, onLoginProm
     return (
       <div className="answer-section">
         <div className="success-banner">
-          <span className="success-icon">✓</span>
+          <span className="success-icon">Submitted</span>
           <div>
             <strong>Answer submitted!</strong> Thanks for participating. Results will be announced after the deadline.
             <div style={{ marginTop: "0.75rem", padding: "0.75rem 1rem", background: "#f7f3ec", borderRadius: "3px", fontFamily: "'DM Mono', monospace", fontSize: "0.82rem" }}>
@@ -793,7 +793,7 @@ function AuthModal({ mode, onClose, onSwitchMode, onLogin, onSignup }) {
       <div className="modal">
         <div className="modal-header">
           <span className="modal-title">{mode === "login" ? "Welcome back" : "Join MathSoc Puzzles"}</span>
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <button className="modal-close" onClick={onClose}>x</button>
         </div>
         <div className="modal-body">
           <div className="modal-tabs">
@@ -813,7 +813,7 @@ function AuthModal({ mode, onClose, onSwitchMode, onLogin, onSignup }) {
           <div className="field">
             <label>Password</label>
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={handleKey} placeholder="••••••••" />
-            {error && <div className="field-error">⚠ {error}</div>}
+            {error && <div className="field-error">Error: {error}</div>}
           </div>
           <button className="btn btn-primary btn-full" onClick={handleSubmit}>
             {mode === "login" ? "Log in" : "Create account"}
@@ -851,10 +851,10 @@ function DirectorPanel({ question, submissions, users, onUpdate }) {
         <p className="director-sub">Manage weekly questions and track submissions.</p>
         <div className="dir-tabs">
           <button className={`dir-tab ${tab === "preview" ? "active" : ""}`} onClick={() => setTab("preview")}>
-            📋 Current Question
+            Current Question
           </button>
           <button className={`dir-tab ${tab === "edit" ? "active" : ""}`} onClick={() => setTab("edit")}>
-            ✏️ Edit Question
+            Edit Question
           </button>
         </div>
       </div>
@@ -955,7 +955,7 @@ function DirectorPanel({ question, submissions, users, onUpdate }) {
 
             <div className="edit-actions">
               <button className="btn-publish" onClick={handlePublish}>
-                {saved ? "✓ Published!" : "Publish Question →"}
+                {saved ? "Published!" : "Publish Question ->"}
               </button>
             </div>
 
