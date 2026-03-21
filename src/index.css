@@ -1,13 +1,43 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+:root {
+  --ms-bg-deep: #08080c;
+  --ms-bg-surface: #0f0f16;
+  --ms-bg-card: rgba(14, 14, 20, 0.72);
+  --ms-bg-card-solid: rgba(15, 15, 22, 0.94);
+  --ms-bg-nav: rgba(8, 8, 12, 0.75);
+  --ms-border: rgba(212, 175, 55, 0.22);
+  --ms-border-hover: rgba(212, 175, 55, 0.38);
+  --ms-border-subtle: rgba(212, 175, 55, 0.12);
+  --ms-gold: #d4af37;
+  --ms-gold-bright: #e8c547;
+  --ms-gold-deep: #a67c00;
+  --ms-gold-glow: rgba(212, 175, 55, 0.14);
+  --ms-cream: #f5ecd8;
+  --ms-cream-soft: #f0e6c8;
+  --ms-muted: rgba(245, 236, 216, 0.58);
+  --ms-muted-2: rgba(245, 236, 216, 0.38);
+  --ms-muted-3: rgba(245, 236, 216, 0.22);
+  --ms-radius-sm: 8px;
+  --ms-radius-md: 14px;
+  --ms-radius-lg: 22px;
+  --ms-font-display: "Crimson Pro", Georgia, "Times New Roman", serif;
+  --ms-font-ui: "DM Sans", system-ui, sans-serif;
+  --ms-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ms-shadow-card: 0 4px 24px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  --ms-shadow-card-hover: 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(212, 175, 55, 0.08) inset;
+  --ms-shadow-btn: 0 4px 20px rgba(212, 175, 55, 0.25);
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--ms-bg-deep);
+  color: var(--ms-cream-soft);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
