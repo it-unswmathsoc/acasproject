@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext(null);
+const REMOVED_USERNAMES = new Set(['acad_director']);
 
 // Seed default accounts
 const DEFAULT_USERS = [
@@ -10,7 +11,7 @@ const DEFAULT_USERS = [
     email: 'academics@mathsoc.com',
     password: 'mathsocrox',
     role: 'director',
-    displayName: 'Academics Director',
+    displayName: 'Jenny Weng',
     createdAt: new Date().toISOString(),
   },
   {
@@ -52,7 +53,10 @@ export function AuthProvider({ children }) {
       if (!Array.isArray(parsed)) return DEFAULT_USERS;
 
       // Keep stored users, but ensure seeded defaults still exist.
-      const byUsername = new Map(parsed.map(u => [String(u.username || '').toLowerCase(), u]));
+      const filtered = parsed
+        .filter(u => !REMOVED_USERNAMES.has(String(u?.username || '').toLowerCase()))
+        .map(u => ({ ...u, displayName: u.username }));
+      const byUsername = new Map(filtered.map(u => [String(u.username || '').toLowerCase(), u]));
       for (const seed of DEFAULT_USERS) {
         const key = String(seed.username || '').toLowerCase();
         if (!byUsername.has(key)) byUsername.set(key, seed);
@@ -90,7 +94,7 @@ export function AuthProvider({ children }) {
     return { success: true, user: safeUser };
   };
 
-  const register = ({ username, email, password, displayName }) => {
+  const register = ({ username, email, password }) => {
     if (users.find(u => u.username === username)) return { error: 'Username already taken' };
     if (users.find(u => u.email === email)) return { error: 'Email already registered' };
 
@@ -100,7 +104,7 @@ export function AuthProvider({ children }) {
       email,
       password,
       role: 'member',
-      displayName: displayName || username,
+      displayName: username,
       createdAt: new Date().toISOString(),
     };
     setUsers(prev => [...prev, newUser]);

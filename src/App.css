@@ -725,6 +725,7 @@ button {
   font-family: var(--ms-font-ui);
   font-weight: 500;
   border: 1px solid transparent;
+  white-space: nowrap;
 }
 
 /* ─── Director dashboard ─── */
@@ -855,7 +856,7 @@ button {
 
 .ms-table-head {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr auto;
+  grid-template-columns: minmax(170px, 1.2fr) minmax(200px, 1.2fr) minmax(140px, 1fr) minmax(200px, 1.4fr);
   padding: 14px 20px;
   border-bottom: 1px solid var(--ms-border-subtle);
   font-size: 10px;
@@ -867,10 +868,21 @@ button {
 
 .ms-table-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr auto;
+  grid-template-columns: minmax(170px, 1.2fr) minmax(200px, 1.2fr) minmax(140px, 1fr) minmax(200px, 1.4fr);
   padding: 16px 20px;
   border-bottom: 1px solid rgba(212, 175, 55, 0.06);
   align-items: center;
+}
+
+.ms-table-head > span,
+.ms-table-row > span {
+  justify-self: start;
+}
+
+.ms-table-head > span:nth-child(2),
+.ms-table-row > span:nth-child(2) {
+  justify-self: center;
+  transform: translateX(-60px);
 }
 
 .ms-table-row:last-child {

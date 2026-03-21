@@ -59,7 +59,6 @@ export default function LandingPage({ onEnter }) {
           Enter Portal
         </button>
 
-        <p className="ms-hint-text">Directors sign in with your credentials below</p>
       </div>
 
       <div className="ms-footnote">Mathematics Society · UNSW Sydney</div>

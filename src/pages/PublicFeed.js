@@ -32,9 +32,9 @@ const TYPE_CONFIG = {
 
 function PostCard({ post, userId, username }) {
   const { submitAnswer, getUserSubmission } = useData();
-  const [expanded, setExpanded] = useState(false);
   const [showSubmit, setShowSubmit] = useState(false);
   const [answer, setAnswer] = useState('');
+  const [zoomedImage, setZoomedImage] = useState(null);
 
   const existingSub = getUserSubmission(post.id, userId);
   const typeConfig = TYPE_CONFIG[post.type] || TYPE_CONFIG.puzzle;
@@ -45,6 +45,13 @@ function PostCard({ post, userId, username }) {
     submitAnswer(post.id, { userId, answer: answer.trim(), username });
     setShowSubmit(false);
   };
+
+  const isPdfFile = (file) => {
+    const type = String(file?.type || '').toLowerCase();
+    const name = String(file?.name || '').toLowerCase();
+    return type.includes('pdf') || name.endsWith('.pdf');
+  };
+  const isImageFile = (file) => String(file?.type || '').toLowerCase().startsWith('image/');
 
   return (
     <div className="ms-post-card">
@@ -74,22 +81,50 @@ function PostCard({ post, userId, username }) {
       <p
         className="ms-post-card__body"
         style={{
-          display: expanded ? 'block' : '-webkit-box',
-          WebkitLineClamp: expanded ? 'unset' : 3,
-          WebkitBoxOrient: 'vertical',
-          overflow: expanded ? 'visible' : 'hidden',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
         }}
       >
         {post.content}
       </p>
-
-      {post.content.length > 200 && (
-        <button type="button" className="ms-link-quiet" onClick={() => setExpanded(!expanded)}>
-          {expanded ? '↑ Show less' : '↓ Read more'}
-        </button>
+      {post.attachments?.length > 0 && (
+        <div style={{ marginBottom: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {post.attachments.map((file) => (
+            <div key={file.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {isPdfFile(file) ? (
+                <div style={{ border: '1px solid var(--ms-border-subtle)', borderRadius: 'var(--ms-radius-sm)', overflow: 'hidden', background: 'rgba(255,255,255,0.02)' }}>
+                  <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--ms-border-subtle)', color: 'var(--ms-muted-2)', fontSize: '12px', fontFamily: 'var(--ms-font-ui)' }}>
+                    PDF: {file.name}
+                  </div>
+                  <iframe
+                    title={`pdf-${file.id}`}
+                    src={file.dataUrl}
+                    style={{ width: '100%', height: '420px', border: 'none', background: '#111' }}
+                  />
+                </div>
+              ) : isImageFile(file) ? (
+                <div style={{ border: '1px solid var(--ms-border-subtle)', borderRadius: 'var(--ms-radius-sm)', overflow: 'hidden', background: 'rgba(255,255,255,0.02)' }}>
+                  <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--ms-border-subtle)', color: 'var(--ms-muted-2)', fontSize: '12px', fontFamily: 'var(--ms-font-ui)' }}>
+                    Image: {file.name}
+                  </div>
+                  <img
+                    src={file.dataUrl}
+                    alt={file.name}
+                    onClick={() => setZoomedImage({ src: file.dataUrl, name: file.name })}
+                    style={{ width: '100%', maxHeight: '560px', objectFit: 'contain', display: 'block', background: '#111', cursor: 'zoom-in' }}
+                  />
+                </div>
+              ) : (
+                <div style={{ padding: '10px 12px', color: 'var(--ms-muted-3)', fontSize: '12px', fontFamily: 'var(--ms-font-ui)', border: '1px solid var(--ms-border-subtle)', borderRadius: 'var(--ms-radius-sm)' }}>
+                  {file.name} (preview not available)
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       )}
 
-      {expanded && post.hint && (
+      {post.hint && (
         <div className="ms-hint-block">Hint: {post.hint}</div>
       )}
 
@@ -151,6 +186,25 @@ function PostCard({ post, userId, username }) {
             <button type="button" className="ms-btn-secondary" onClick={handleSubmit}>
               Submit
             </button>
+          </div>
+        </div>
+      )}
+      {zoomedImage && (
+        <div
+          onClick={() => setZoomedImage(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
+        >
+          <div style={{ maxWidth: '95vw', maxHeight: '95vh', width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#ddd', fontSize: '12px', fontFamily: 'var(--ms-font-ui)' }}>
+              <span>{zoomedImage.name}</span>
+              <button type="button" onClick={() => setZoomedImage(null)} className="ms-btn-ghost ms-btn-ghost--sm">Close</button>
+            </div>
+            <img
+              src={zoomedImage.src}
+              alt={zoomedImage.name}
+              onClick={e => e.stopPropagation()}
+              style={{ width: '100%', maxHeight: '88vh', objectFit: 'contain', borderRadius: 'var(--ms-radius-sm)', background: '#111' }}
+            />
           </div>
         </div>
       )}
