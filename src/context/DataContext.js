@@ -19,7 +19,7 @@ const SAMPLE_POSTS = [
   {
     id: '2',
     type: 'fact',
-    title: '🌀 Fun Fact: The Banach–Tarski Paradox',
+    title: 'Fun Fact: The Banach-Tarski Paradox',
     content: 'In theory, you can decompose a solid ball into a finite number of pieces, then reassemble them into TWO balls identical to the original — just by rotating and translating the pieces. No stretching allowed! This relies on the Axiom of Choice and non-measurable sets.',
     hint: null,
     deadline: null,

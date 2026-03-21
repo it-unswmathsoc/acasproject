@@ -124,14 +124,6 @@ export default function AuthPage({ onBack }) {
           </button>
         </div>
 
-        {tab === 'login' && (
-          <div className="ms-demo-box">
-            <strong>Demo director account</strong>
-            Username: <span style={{ color: 'var(--ms-muted-2)' }}>acad_director</span>
-            <br />
-            Password: <span style={{ color: 'var(--ms-muted-2)' }}>mathsoc2024</span>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -6,17 +6,19 @@ export default function LandingPage({ onEnter }) {
   useEffect(() => {
     const mq = typeof window.matchMedia === 'function' ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
     if (mq?.matches) return undefined;
-    const id = setInterval(() => setTick(t => t + 1), 80);
+    const id = setInterval(() => setTick(t => t + 1), 50);
     return () => clearInterval(id);
   }, []);
 
-  const symbols = ['∑', 'π', '∫', '√', '∞', 'Δ', 'θ', 'λ', '∂', 'φ', '≈', '⊕'];
-  const floaters = Array.from({ length: 18 }, (_, i) => ({
+  const symbols = ['∑', 'π', '∫', '√', '∞', 'Δ', 'θ', 'λ', '∂', 'φ', '≈', '⊕', '∀', '∃', '≠', '≤', '≥', '⊂', '⊆', '∈'];
+  const floaters = Array.from({ length: 34 }, (_, i) => ({
     sym: symbols[i % symbols.length],
-    x: (i * 137.5) % 100,
-    y: ((i * 67 + tick * 0.08) % 110) - 5,
-    opacity: 0.06 + (i % 5) * 0.028,
-    size: 16 + (i % 4) * 10,
+    x: (i * 89.3) % 100,
+    y: ((i * 41 + tick * (0.2 + (i % 5) * 0.04)) % 125) - 10,
+    opacity: 0.14 + (i % 6) * 0.055,
+    size: 18 + (i % 6) * 8,
+    hue: (i * 23) % 360,
+    drift: ((i % 7) - 3) * 0.08,
   }));
 
   return (
@@ -27,10 +29,11 @@ export default function LandingPage({ onEnter }) {
           key={i}
           className="ms-floater"
           style={{
-            left: `${f.x}%`,
+            left: `${f.x + Math.sin((tick + i * 9) * 0.05) * f.drift}%`,
             top: `${f.y}%`,
             fontSize: f.size,
             opacity: f.opacity,
+            color: '#f4c542',
           }}
         >
           {f.sym}

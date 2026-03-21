@@ -72,7 +72,7 @@ function PostForm({ onClose, editPost }) {
                   }}
                   onClick={() => set('type', t)}
                 >
-                  {t === 'puzzle' ? '🧩 Puzzle' : t === 'challenge' ? '🏆 Challenge' : '💡 Fact'}
+                  {t === 'puzzle' ? 'Puzzle' : t === 'challenge' ? 'Challenge' : 'Fact'}
                 </button>
               ))}
             </div>
@@ -351,8 +351,8 @@ export default function DirectorDashboard({ onLogout }) {
 
       <div className="ms-dash-tabs">
         {[
-          { id: 'posts', label: '📋 Posts & Puzzles' },
-          { id: 'members', label: '👥 Members' },
+          { id: 'posts', label: 'Posts & Puzzles' },
+          { id: 'members', label: 'Members' },
         ].map(t => (
           <button
             key={t.id}
