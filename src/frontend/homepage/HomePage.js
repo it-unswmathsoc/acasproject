@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { buildFloatingMathSymbols } from './animation';
+import HomeTitles from './titles';
+import RegisterButton from './register_button';
 
-export default function LandingPage({ onEnter }) {
+export default function HomePage({ onEnter }) {
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
@@ -10,16 +13,7 @@ export default function LandingPage({ onEnter }) {
     return () => clearInterval(id);
   }, []);
 
-  const symbols = ['∑', 'π', '∫', '√', '∞', 'Δ', 'θ', 'λ', '∂', 'φ', '≈', '⊕', '∀', '∃', '≠', '≤', '≥', '⊂', '⊆', '∈'];
-  const floaters = Array.from({ length: 34 }, (_, i) => ({
-    sym: symbols[i % symbols.length],
-    x: (i * 89.3) % 100,
-    y: ((i * 41 + tick * (0.2 + (i % 5) * 0.04)) % 125) - 10,
-    opacity: 0.14 + (i % 6) * 0.055,
-    size: 18 + (i % 6) * 8,
-    hue: (i * 23) % 360,
-    drift: ((i % 7) - 3) * 0.08,
-  }));
+  const floaters = buildFloatingMathSymbols(tick);
 
   return (
     <div className="ms-page ms-page--landing">
@@ -48,20 +42,16 @@ export default function LandingPage({ onEnter }) {
           <div className="ms-rule__line" />
         </div>
 
-        <h1 className="ms-title-display">MathSoc</h1>
-        <div className="ms-title-sub">Academics Portal</div>
+        <HomeTitles />
 
         <p className="ms-body-lead">
-          Weekly puzzles, math facts, and timed challenges — crafted by the Academics team for curious minds.
+          Weekly puzzles, math facts, and timed challenges - crafted by the Academics team for curious minds.
         </p>
 
-        <button type="button" className="ms-btn-primary" onClick={onEnter}>
-          Enter Portal
-        </button>
-
+        <RegisterButton onClick={onEnter} />
       </div>
 
-      <div className="ms-footnote">Mathematics Society · UNSW Sydney</div>
+      <div className="ms-footnote">Mathematics Society - UNSW Sydney</div>
     </div>
   );
 }
