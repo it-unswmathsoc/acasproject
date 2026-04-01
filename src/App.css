@@ -728,7 +728,7 @@ button {
   white-space: nowrap;
 }
 
-/* ─── Director dashboard ─── */
+/*  Director dashboard  */
 .ms-dash-tabs {
   display: flex;
   border-bottom: 1px solid var(--ms-border-subtle);
@@ -889,7 +889,7 @@ button {
   border-bottom: none;
 }
 
-/* ─── Modal ─── */
+/* Modal  */
 .ms-modal-backdrop {
   position: fixed;
   inset: 0;

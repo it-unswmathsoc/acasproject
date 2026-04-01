@@ -3,44 +3,11 @@ import { createContext, useContext, useState, useEffect } from 'react';
 const AuthContext = createContext(null);
 const REMOVED_USERNAMES = new Set(['acad_director']);
 
-// Seed default accounts
 const DEFAULT_USERS = [
-  {
-    id: '1',
-    username: 'Jenny Weng',
-    email: 'academics@mathsoc.com',
-    password: 'mathsocrox',
-    role: 'director',
-    displayName: 'Jenny Weng',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    username: 'Jimmy Sun',
-    email: 'academics@mathsoc.com',
-    password: 'mathsocrox',
-    role: 'director',
-    displayName: 'Academics Director',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    username: 'Thomas Liao',
-    email: 'academics@mathsoc.com',
-    password: 'mathsocrox',
-    role: 'director',
-    displayName: 'Academics Director',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: '4',
-    username: 'directortest',
-    email: 'academics@mathsoc.com',
-    password: 'mathsocrox',
-    role: 'director',
-    displayName: 'Academics Director',
-    createdAt: new Date().toISOString(),
-  }
+  { id: '1', username: 'Jenny Weng', email: 'academics@mathsoc.com', password: 'mathsocrox', role: 'director', displayName: 'Jenny Weng', createdAt: new Date().toISOString() },
+  { id: '2', username: 'Jimmy Sun', email: 'academics@mathsoc.com', password: 'mathsocrox', role: 'director', displayName: 'Academics Director', createdAt: new Date().toISOString() },
+  { id: '3', username: 'Thomas Liao', email: 'academics@mathsoc.com', password: 'mathsocrox', role: 'director', displayName: 'Academics Director', createdAt: new Date().toISOString() },
+  { id: '4', username: 'directortest', email: 'academics@mathsoc.com', password: 'mathsocrox', role: 'director', displayName: 'Academics Director', createdAt: new Date().toISOString() }
 ];
 
 export function AuthProvider({ children }) {
@@ -51,11 +18,7 @@ export function AuthProvider({ children }) {
     try {
       const parsed = JSON.parse(stored);
       if (!Array.isArray(parsed)) return DEFAULT_USERS;
-
-      // Keep stored users, but ensure seeded defaults still exist.
-      const filtered = parsed
-        .filter(u => !REMOVED_USERNAMES.has(String(u?.username || '').toLowerCase()))
-        .map(u => ({ ...u, displayName: u.username }));
+      const filtered = parsed.filter(u => !REMOVED_USERNAMES.has(String(u?.username || '').toLowerCase())).map(u => ({ ...u, displayName: u.username }));
       const byUsername = new Map(filtered.map(u => [String(u.username || '').toLowerCase(), u]));
       for (const seed of DEFAULT_USERS) {
         const key = String(seed.username || '').toLowerCase();
@@ -80,12 +43,7 @@ export function AuthProvider({ children }) {
     const normalizedId = String(identifier || '').trim().toLowerCase();
     const normalizedPass = String(password || '').trim();
     const found = users.find(
-      u =>
-        (
-          String(u.username || '').toLowerCase() === normalizedId ||
-          String(u.email || '').toLowerCase() === normalizedId
-        ) &&
-        String(u.password || '') === normalizedPass
+      u => (String(u.username || '').toLowerCase() === normalizedId || String(u.email || '').toLowerCase() === normalizedId) && String(u.password || '') === normalizedPass
     );
     if (!found) return { error: 'Invalid credentials' };
     const { password: _, ...safeUser } = found;
@@ -97,16 +55,7 @@ export function AuthProvider({ children }) {
   const register = ({ username, email, password }) => {
     if (users.find(u => u.username === username)) return { error: 'Username already taken' };
     if (users.find(u => u.email === email)) return { error: 'Email already registered' };
-
-    const newUser = {
-      id: Date.now().toString(),
-      username,
-      email,
-      password,
-      role: 'member',
-      displayName: username,
-      createdAt: new Date().toISOString(),
-    };
+    const newUser = { id: Date.now().toString(), username, email, password, role: 'member', displayName: username, createdAt: new Date().toISOString() };
     setUsers(prev => [...prev, newUser]);
     const { password: _, ...safeUser } = newUser;
     setUser(safeUser);
@@ -119,11 +68,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('mathsoc_current_user');
   };
 
-  return (
-    <AuthContext.Provider value={{ user, login, register, logout, users }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ user, login, register, logout, users }}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);
