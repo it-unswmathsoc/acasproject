@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { buildFloatingMathSymbols } from './animation';
 import HomeTitles from './titles';
-import RegisterButton from './register_button';
 
 export default function HomePage({ onEnter }) {
   const [tick, setTick] = useState(0);
@@ -48,7 +47,9 @@ export default function HomePage({ onEnter }) {
           Weekly puzzles, math facts, and timed challenges - crafted by the Academics team for curious minds.
         </p>
 
-        <RegisterButton onClick={onEnter} />
+        <button type="button" className="ms-btn-primary" onClick={onEnter}>
+          Get Started
+        </button>
       </div>
 
       <div className="ms-footnote">Mathematics Society - UNSW Sydney</div>
