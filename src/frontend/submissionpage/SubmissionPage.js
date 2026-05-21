@@ -127,7 +127,11 @@ export default function SubmissionPage({ onBack }) {
           ) : latestPdf ? (
             <div style={{ marginBottom: '18px' }}>
               <iframe
-                src={latestPdf.webViewUrl}
+                src={
+                  latestPdf.embedUrl?.startsWith('http')
+                    ? latestPdf.embedUrl
+                    : `${API_BASE_URL}${latestPdf.embedUrl || '/api/latest-pdf/content'}`
+                }
                 title={latestPdf.name || 'Current question PDF'}
                 style={{ width: '100%', minHeight: '600px', border: '1px solid var(--ms-border)', borderRadius: '10px' }}
               />
