@@ -25,8 +25,49 @@ function buildGoogleAuth() {
   return new google.auth.JWT({
     email: clientEmail,
     key: privateKey,
-    scopes: ['https://www.googleapis.com/auth/drive.readonly']
+    scopes: [
+      'https://www.googleapis.com/auth/drive.readonly',
+      'https://www.googleapis.com/auth/spreadsheets.readonly'
+    ]
   });
+}
+
+async function getLeaderboardFromSheet() {
+  const sheetId = requireEnv('LEADERBOARD_SHEET_ID');
+  const range = process.env.LEADERBOARD_SHEET_RANGE || 'Sheet1!A2:C';
+  const auth = buildGoogleAuth();
+  const sheets = google.sheets({ version: 'v4', auth });
+
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: sheetId,
+    range
+  });
+
+  const rows = response.data.values || [];
+  const entries = [];
+
+  for (const row of rows) {
+    const [rankRaw = '', nameRaw = '', scoreRaw = ''] = row;
+    const rank = String(rankRaw).trim();
+    const name = String(nameRaw).trim();
+    const score = String(scoreRaw).trim();
+
+    if (!rank && !name && !score) {
+      continue;
+    }
+
+    const firstCell = rank.toLowerCase();
+    if (firstCell === 'rank' && !name && !score) {
+      continue;
+    }
+    if (firstCell === 'rank' && name.toLowerCase() === 'name') {
+      continue;
+    }
+
+    entries.push({ rank, name, score });
+  }
+
+  return entries;
 }
 
 function buildEmailTransport() {
@@ -149,7 +190,7 @@ app.get('/api/latest-pdf/content', async (req, res) => {
 
 app.post('/api/submissions', async (req, res) => {
   try {
-    const { name = '', email = '', solution = '' } = req.body || {};
+    const { name = '', email = '', solution = '', latexMode = false } = req.body || {};
     if (!solution.trim()) {
       return res.status(400).json({ error: 'Solution is required.' });
     }
@@ -168,6 +209,7 @@ app.post('/api/submissions', async (req, res) => {
         `Submitted At: ${submittedAt}`,
         `Name: ${name.trim() || 'Not provided'}`,
         `Email: ${email.trim() || 'Not provided'}`,
+        `LaTeX mode: ${latexMode ? 'yes' : 'no'}`,
         '',
         'Solution:',
         solution.trim()
@@ -179,6 +221,24 @@ app.post('/api/submissions', async (req, res) => {
     return res.status(500).json({
       error: 'Failed to send submission email.',
       details: error.message
+    });
+  }
+});
+
+app.get('/api/leaderboard', async (req, res) => {
+  try {
+    const entries = await getLeaderboardFromSheet();
+    return res.json({ entries });
+  } catch (error) {
+    const isForbidden = error.code === 403 || error.response?.status === 403;
+    const statusCode = isForbidden ? 403 : (error.statusCode || 500);
+    const serviceEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || 'your service account email';
+    const details = isForbidden
+      ? `Share the LEADERBOARD Google Sheet with ${serviceEmail} as Viewer (not only the Drive folder).`
+      : error.message;
+    return res.status(statusCode).json({
+      error: 'Failed to fetch leaderboard from Google Sheets.',
+      details
     });
   }
 });
