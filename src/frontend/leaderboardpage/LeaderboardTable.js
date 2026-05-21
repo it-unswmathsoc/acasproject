@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000';
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL !== undefined
+    ? process.env.REACT_APP_API_BASE_URL
+    : process.env.NODE_ENV === 'production'
+      ? ''
+      : 'http://localhost:4000';
 
 export default function LeaderboardTable({ showRefresh = true }) {
   const [entries, setEntries] = useState([]);

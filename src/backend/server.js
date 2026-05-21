@@ -247,7 +247,11 @@ app.get('/api/health', (req, res) => {
   res.json({ ok: true });
 });
 
-app.listen(API_PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`API server running on http://localhost:${API_PORT}`);
-});
+if (!process.env.VERCEL) {
+  app.listen(API_PORT, () => {
+    // eslint-disable-next-line no-console
+    console.log(`API server running on http://localhost:${API_PORT}`);
+  });
+}
+
+module.exports = app;
