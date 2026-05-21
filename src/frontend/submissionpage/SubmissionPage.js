@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import MathSolutionField from './MathSolutionField';
+import { dismissMathLiveUI } from './dismissMathLiveUI';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000';
 
@@ -6,6 +8,7 @@ export default function SubmissionPage({ onBack }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [solution, setSolution] = useState('');
+  const [latexMode, setLatexMode] = useState(false);
   const [latestPdf, setLatestPdf] = useState(null);
   const [isLoadingPdf, setIsLoadingPdf] = useState(true);
   const [pdfError, setPdfError] = useState('');
@@ -47,9 +50,32 @@ export default function SubmissionPage({ onBack }) {
     loadLatestPdf();
   }, []);
 
+  useEffect(() => {
+    document.body.classList.toggle('ms-math-mode-active', latexMode);
+    if (!latexMode) {
+      dismissMathLiveUI();
+    }
+    return () => {
+      document.body.classList.remove('ms-math-mode-active');
+      dismissMathLiveUI();
+    };
+  }, [latexMode]);
+
+  const handleMathModeToggle = () => {
+    if (latexMode) {
+      dismissMathLiveUI();
+    }
+    setLatexMode((on) => !on);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (isSubmitting || isSubmitted) {
+      return;
+    }
+
+    if (!solution.trim()) {
+      setSubmitError('Solution is required.');
       return;
     }
 
@@ -59,7 +85,7 @@ export default function SubmissionPage({ onBack }) {
       const response = await fetch(`${API_BASE_URL}/api/submissions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, solution })
+        body: JSON.stringify({ name, email, solution, latexMode })
       });
 
       if (!response.ok) {
@@ -126,16 +152,35 @@ export default function SubmissionPage({ onBack }) {
             </div>
 
             <div>
-              <label className="ms-label" htmlFor="submission-solution">Solution</label>
-              <textarea
-                id="submission-solution"
-                className="ms-textarea"
-                rows={8}
-                value={solution}
-                onChange={(e) => setSolution(e.target.value)}
-                placeholder="Write your full solution here..."
-                required
-              />
+              <div className="ms-solution-header">
+                <label className="ms-label" htmlFor="submission-solution">Solution</label>
+                <button
+                  type="button"
+                  className={`ms-latex-toggle${latexMode ? ' ms-latex-toggle--on' : ''}`}
+                  onClick={handleMathModeToggle}
+                  aria-pressed={latexMode}
+                >
+                  Math mode {latexMode ? 'ON' : 'OFF'}
+                </button>
+              </div>
+              <p className="ms-math-hint">
+                {latexMode
+                  ? 'Type naturally — fractions, exponents, and roots format as you write (like Desmos).'
+                  : 'Turn on Math mode for automatic math formatting.'}
+              </p>
+              {latexMode ? (
+                <MathSolutionField id="submission-solution" value={solution} onChange={setSolution} />
+              ) : (
+                <textarea
+                  id="submission-solution"
+                  className="ms-textarea"
+                  rows={8}
+                  value={solution}
+                  onChange={(e) => setSolution(e.target.value)}
+                  placeholder="Write your full solution here..."
+                  required
+                />
+              )}
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

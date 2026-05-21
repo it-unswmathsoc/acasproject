@@ -36,12 +36,23 @@ button {
   position: relative;
 }
 
+.ms-page__bg {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
 .ms-page--landing {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  justify-content: flex-start;
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+  padding: clamp(32px, 6vw, 56px) 16px clamp(32px, 5vw, 48px);
   background:
     radial-gradient(ellipse 120% 80% at 50% -20%, rgba(255, 208, 76, 0.2), transparent 52%),
     radial-gradient(ellipse 70% 60% at 80% 60%, rgba(255, 208, 76, 0.1), transparent 48%),
@@ -70,20 +81,41 @@ button {
   animation: none;
 }
 
-.ms-floater {
+@keyframes ms-floater-rise {
+  0% {
+    transform: translate3d(calc(-50% + var(--ms-floater-drift, 0px)), -110vh, 0);
+  }
+  100% {
+    transform: translate3d(calc(-50% + var(--ms-floater-drift, 0px)), 105vh, 0);
+  }
+}
+
+.ms-floater-lane {
   position: absolute;
+  top: 0;
+  width: 0;
+  height: 0;
+  z-index: 3;
+}
+
+.ms-floater {
+  position: relative;
+  left: 0;
   user-select: none;
   pointer-events: none;
   font-family: "STIX Two Math", "Cambria Math", serif;
   color: var(--ms-gold-bright);
-  z-index: 2;
-  transition: top 0.05s linear, left 0.08s ease-out, opacity 0.2s ease-out;
   mix-blend-mode: normal;
+  will-change: transform;
+  white-space: nowrap;
+  animation: ms-floater-rise var(--ms-floater-duration, 32s) linear infinite;
+  animation-delay: var(--ms-floater-delay, 0s);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .ms-floater {
-    transition: none;
+    animation: none;
+    transform: translate3d(-50%, 0, 0);
   }
 }
 
@@ -99,11 +131,63 @@ button {
   box-shadow: var(--ms-shadow-card), 0 0 60px rgba(212, 175, 55, 0.04);
 }
 
+.ms-home-stack {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(20px, 4vw, 28px);
+  width: 100%;
+  max-width: 640px;
+  padding: 0 24px;
+}
+
+.ms-glass-card--hero,
+.ms-glass-card--leaderboard {
+  box-shadow: var(--ms-shadow-card), 0 0 60px rgba(212, 175, 55, 0.06);
+}
+
 .ms-glass-card--hero {
   text-align: center;
   padding: clamp(40px, 8vw, 64px) clamp(32px, 6vw, 52px);
-  max-width: 560px;
-  width: calc(100% - 48px);
+  width: 100%;
+}
+
+.ms-glass-card--leaderboard {
+  width: 100%;
+  padding: clamp(20px, 4vw, 28px);
+}
+
+.ms-glass-card--leaderboard .ms-table-wrap {
+  background: rgba(10, 10, 16, 0.45);
+  border: 1px solid var(--ms-border-subtle);
+  box-shadow: none;
+}
+
+.ms-leaderboard-panel__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.ms-leaderboard-panel__placeholder {
+  border: 1px dashed var(--ms-border);
+  border-radius: 10px;
+  min-height: 120px;
+  display: grid;
+  place-items: center;
+  color: var(--ms-muted-2);
+  padding: 20px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.ms-leaderboard-panel__placeholder--error {
+  color: #f87171;
 }
 
 .ms-glass-card--narrow {
@@ -189,10 +273,6 @@ button {
 }
 
 .ms-footnote {
-  position: absolute;
-  bottom: 28px;
-  left: 50%;
-  transform: translateX(-50%);
   font-size: 11px;
   color: var(--ms-muted-3);
   font-family: var(--ms-font-ui);
@@ -200,6 +280,14 @@ button {
   text-transform: uppercase;
   z-index: 10;
   white-space: nowrap;
+}
+
+.ms-footnote--flow {
+  position: static;
+  transform: none;
+  margin-top: clamp(12px, 3vw, 20px);
+  text-align: center;
+  width: 100%;
 }
 
 @media (max-width: 520px) {
@@ -681,6 +769,144 @@ button {
   box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
 }
 
+.ms-textarea--latex {
+  font-family: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.ms-solution-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.ms-solution-header .ms-label {
+  margin-bottom: 0;
+}
+
+.ms-latex-toggle {
+  appearance: none;
+  border: 1px solid var(--ms-border-subtle);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ms-muted);
+  font-family: var(--ms-font-ui);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  border-radius: var(--ms-radius-sm);
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.ms-latex-toggle:hover {
+  border-color: var(--ms-border-hover);
+  color: var(--ms-cream-soft);
+}
+
+.ms-latex-toggle--on {
+  border-color: rgba(212, 175, 55, 0.5);
+  background: rgba(212, 175, 55, 0.12);
+  color: var(--ms-gold-bright);
+}
+
+.ms-latex-preview {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--ms-border-subtle);
+  border-radius: var(--ms-radius-sm);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--ms-cream-soft);
+  font-family: var(--ms-font-display);
+  font-size: 15px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ms-latex-preview--empty {
+  color: var(--ms-muted-2);
+  font-size: 13px;
+}
+
+.ms-latex-preview--empty code {
+  font-family: ui-monospace, 'Consolas', monospace;
+  font-size: 12px;
+  color: var(--ms-gold-bright);
+}
+
+.ms-latex-preview__text {
+  white-space: pre-wrap;
+}
+
+.ms-latex-preview__display {
+  margin: 10px 0;
+  overflow-x: auto;
+  text-align: center;
+}
+
+.ms-latex-preview__inline {
+  display: inline-block;
+  margin: 0 2px;
+  vertical-align: middle;
+}
+
+.ms-latex-preview__error {
+  color: #f87171;
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+}
+
+.ms-latex-preview .katex {
+  color: var(--ms-cream-soft);
+}
+
+.ms-math-hint {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--ms-muted-2);
+  font-family: var(--ms-font-ui);
+  line-height: 1.5;
+}
+
+.ms-math-field {
+  display: block;
+  width: 100%;
+  min-height: 200px;
+  padding: 14px 16px;
+  font-size: 20px;
+  color-scheme: dark;
+  color: var(--ms-cream-soft);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--ms-border-subtle);
+  border-radius: var(--ms-radius-sm);
+  --contains-highlight-background-color: rgba(212, 175, 55, 0.2);
+  --selection-background-color: rgba(212, 175, 55, 0.35);
+  --selection-color: var(--ms-bg-deep);
+  --primary: var(--ms-gold-bright);
+  --text-font-family: "STIX Two Math", "Cambria Math", serif;
+}
+
+.ms-math-field:focus-within {
+  outline: none;
+  border-color: rgba(212, 175, 55, 0.45);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+/* Hide MathLive globals when math mode is off (keyboard/menu can outlive the field). */
+body:not(.ms-math-mode-active) .ML__keyboard,
+body:not(.ms-math-mode-active) #mathlive-environment-popover,
+body:not(.ms-math-mode-active) #mathlive-suggestion-popover,
+body:not(.ms-math-mode-active) #mathlive-keystroke-caption-panel {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 .ms-row-actions {
   display: flex;
   gap: 10px;
@@ -887,6 +1113,27 @@ button {
 
 .ms-table-row:last-child {
   border-bottom: none;
+}
+
+.ms-table-wrap--leaderboard .ms-table-head--leaderboard,
+.ms-table-wrap--leaderboard .ms-table-row--leaderboard {
+  grid-template-columns: 72px 1fr 120px;
+}
+
+.ms-table-wrap--leaderboard .ms-table-head--leaderboard > span:nth-child(2),
+.ms-table-wrap--leaderboard .ms-table-row--leaderboard > span:nth-child(2) {
+  justify-self: start;
+  transform: none;
+}
+
+.ms-table-wrap--leaderboard .ms-table-row--leaderboard > span:first-child {
+  font-weight: 600;
+  color: var(--ms-gold-bright);
+}
+
+.ms-table-wrap--leaderboard .ms-table-row--leaderboard > span:last-child {
+  justify-self: end;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Modal  */
