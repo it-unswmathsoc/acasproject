@@ -2,7 +2,12 @@ import { useEffect, useState } from 'react';
 import MathSolutionField from './MathSolutionField';
 import { dismissMathLiveUI } from './dismissMathLiveUI';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000';
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL !== undefined
+    ? process.env.REACT_APP_API_BASE_URL
+    : process.env.NODE_ENV === 'production'
+      ? ''
+      : 'http://localhost:4000';
 
 export default function SubmissionPage({ onBack }) {
   const [name, setName] = useState('');
@@ -122,7 +127,11 @@ export default function SubmissionPage({ onBack }) {
           ) : latestPdf ? (
             <div style={{ marginBottom: '18px' }}>
               <iframe
-                src={latestPdf.webViewUrl}
+                src={
+                  latestPdf.embedUrl?.startsWith('http')
+                    ? latestPdf.embedUrl
+                    : `${API_BASE_URL}${latestPdf.embedUrl || '/api/latest-pdf/content'}`
+                }
                 title={latestPdf.name || 'Current question PDF'}
                 style={{ width: '100%', minHeight: '600px', border: '1px solid var(--ms-border)', borderRadius: '10px' }}
               />
