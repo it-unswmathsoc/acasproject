@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL !== undefined
@@ -8,9 +8,15 @@ const API_BASE_URL =
       : 'http://localhost:4000';
 
 export default function LeaderboardTable({ showRefresh = true }) {
+  const [columns, setColumns] = useState([]);
   const [entries, setEntries] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const gridStyle = useMemo(
+    () => ({ '--ms-lb-columns': leaderboardGridTemplate(columns) }),
+    [columns]
+  );
 
   const loadLeaderboard = useCallback(async () => {
     try {
@@ -30,8 +36,10 @@ export default function LeaderboardTable({ showRefresh = true }) {
       }
 
       const data = await response.json();
+      setColumns(data.columns || []);
       setEntries(data.entries || []);
     } catch (err) {
+      setColumns([]);
       setEntries([]);
       setError(err.message || 'Failed to load leaderboard.');
     } finally {
@@ -66,17 +74,31 @@ export default function LeaderboardTable({ showRefresh = true }) {
       ) : entries.length === 0 ? (
         <div className="ms-leaderboard-panel__placeholder">No rankings yet. Add rows in your Google Sheet.</div>
       ) : (
-        <div className="ms-table-wrap ms-table-wrap--leaderboard">
+        <div className="ms-table-wrap ms-table-wrap--leaderboard" style={gridStyle}>
           <div className="ms-table-head ms-table-head--leaderboard">
-            <span>Rank</span>
-            <span>Name</span>
-            <span>Score</span>
+            {columns.map((col) => (
+              <span key={col.key}>{col.label}</span>
+            ))}
           </div>
           {entries.map((entry, index) => (
-            <div className="ms-table-row ms-table-row--leaderboard" key={`${entry.rank}-${entry.name}-${index}`}>
-              <span>{entry.rank}</span>
-              <span>{entry.name}</span>
-              <span>{entry.score}</span>
+            <div
+              className="ms-table-row ms-table-row--leaderboard"
+              key={`${index}-${columns.map((c) => entry[c.key]).join('|')}`}
+            >
+              {columns.map((col) => {
+                const k = col.key.toLowerCase();
+                const cellClass =
+                  k === 'rank'
+                    ? 'ms-lb-cell--rank'
+                    : k === 'mark' || k === 'score' || k === 'points'
+                      ? 'ms-lb-cell--score'
+                      : undefined;
+                return (
+                  <span key={col.key} className={cellClass}>
+                    {entry[col.key] ?? ''}
+                  </span>
+                );
+              })}
             </div>
           ))}
         </div>
