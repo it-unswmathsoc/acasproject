@@ -1,8 +1,13 @@
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const { google } = require('googleapis');
 const nodemailer = require('nodemailer');
-require('dotenv').config();
+
+const fs = require('fs');
+const projectEnv = path.resolve(__dirname, '..', '..', '.env');
+const parentEnv = path.resolve(__dirname, '..', '..', '..', '.env');
+require('dotenv').config({ path: fs.existsSync(projectEnv) ? projectEnv : parentEnv });
 
 const app = express();
 const API_PORT = process.env.API_PORT || 4000;
@@ -11,7 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 function requireEnv(name) {
-  const value = process.env[name];
+  const value = process.env[name]?.trim();
   if (!value) {
     throw new Error(`Missing required environment variable: ${name}`);
   }
@@ -32,9 +37,58 @@ function buildGoogleAuth() {
   });
 }
 
+function headerLabelToKey(label, usedKeys) {
+  const base =
+    String(label)
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_|_$/g, '') || 'column';
+
+  let key = base;
+  let n = 1;
+  while (usedKeys.has(key)) {
+    n += 1;
+    key = `${base}_${n}`;
+  }
+  usedKeys.add(key);
+  return key;
+}
+
+/** First row = column headers; following rows = data. Extra sheet columns are picked up automatically. */
+function parseLeaderboardRows(rows) {
+  if (!rows.length) {
+    return { columns: [], entries: [] };
+  }
+
+  const headerCells = rows[0].map((cell) => String(cell ?? '').trim());
+  const usedKeys = new Set();
+  const columns = headerCells.map((label, index) => ({
+    key: headerLabelToKey(label || `column_${index + 1}`, usedKeys),
+    label: label || `Column ${index + 1}`
+  }));
+
+  const entries = [];
+  for (let r = 1; r < rows.length; r += 1) {
+    const row = rows[r] || [];
+    const values = columns.map((_, i) => String(row[i] ?? '').trim());
+    if (values.every((v) => !v)) {
+      continue;
+    }
+
+    const entry = {};
+    columns.forEach((col, i) => {
+      entry[col.key] = values[i];
+    });
+    entries.push(entry);
+  }
+
+  return { columns, entries };
+}
+
 async function getLeaderboardFromSheet() {
   const sheetId = requireEnv('LEADERBOARD_SHEET_ID');
-  const range = process.env.LEADERBOARD_SHEET_RANGE || 'Sheet1!A2:C';
+  const range = process.env.LEADERBOARD_SHEET_RANGE || 'Sheet1!A1:ZZ';
   const auth = buildGoogleAuth();
   const sheets = google.sheets({ version: 'v4', auth });
 
@@ -43,31 +97,7 @@ async function getLeaderboardFromSheet() {
     range
   });
 
-  const rows = response.data.values || [];
-  const entries = [];
-
-  for (const row of rows) {
-    const [rankRaw = '', nameRaw = '', scoreRaw = ''] = row;
-    const rank = String(rankRaw).trim();
-    const name = String(nameRaw).trim();
-    const score = String(scoreRaw).trim();
-
-    if (!rank && !name && !score) {
-      continue;
-    }
-
-    const firstCell = rank.toLowerCase();
-    if (firstCell === 'rank' && !name && !score) {
-      continue;
-    }
-    if (firstCell === 'rank' && name.toLowerCase() === 'name') {
-      continue;
-    }
-
-    entries.push({ rank, name, score });
-  }
-
-  return entries;
+  return parseLeaderboardRows(response.data.values || []);
 }
 
 function buildEmailTransport() {
@@ -227,8 +257,8 @@ app.post('/api/submissions', async (req, res) => {
 
 app.get('/api/leaderboard', async (req, res) => {
   try {
-    const entries = await getLeaderboardFromSheet();
-    return res.json({ entries });
+    const { columns, entries } = await getLeaderboardFromSheet();
+    return res.json({ columns, entries });
   } catch (error) {
     const isForbidden = error.code === 403 || error.response?.status === 403;
     const statusCode = isForbidden ? 403 : (error.statusCode || 500);

@@ -1115,23 +1115,28 @@ body:not(.ms-math-mode-active) #mathlive-keystroke-caption-panel {
   border-bottom: none;
 }
 
-.ms-table-wrap--leaderboard .ms-table-head--leaderboard,
-.ms-table-wrap--leaderboard .ms-table-row--leaderboard {
-  grid-template-columns: 72px 1fr 120px;
+.ms-table-wrap--leaderboard {
+  overflow-x: auto;
 }
 
-.ms-table-wrap--leaderboard .ms-table-head--leaderboard > span:nth-child(2),
-.ms-table-wrap--leaderboard .ms-table-row--leaderboard > span:nth-child(2) {
+.ms-table-wrap--leaderboard .ms-table-head--leaderboard,
+.ms-table-wrap--leaderboard .ms-table-row--leaderboard {
+  grid-template-columns: var(--ms-lb-columns, 72px 1fr 120px);
+  min-width: min(100%, 520px);
+}
+
+.ms-table-wrap--leaderboard .ms-table-head--leaderboard > span,
+.ms-table-wrap--leaderboard .ms-table-row--leaderboard > span {
   justify-self: start;
   transform: none;
 }
 
-.ms-table-wrap--leaderboard .ms-table-row--leaderboard > span:first-child {
+.ms-lb-cell--rank {
   font-weight: 600;
   color: var(--ms-gold-bright);
 }
 
-.ms-table-wrap--leaderboard .ms-table-row--leaderboard > span:last-child {
+.ms-lb-cell--score {
   justify-self: end;
   font-variant-numeric: tabular-nums;
 }
