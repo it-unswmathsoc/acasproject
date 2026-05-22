@@ -7,6 +7,17 @@ const API_BASE_URL =
       ? ''
       : 'http://localhost:4000';
 
+function leaderboardGridTemplate(columns) {
+  return columns
+    .map((col) => {
+      const k = col.key.toLowerCase();
+      if (k === 'rank') return 'minmax(52px, 0.55fr)';
+      if (k === 'name') return 'minmax(140px, 1.6fr)';
+      return 'minmax(88px, 1fr)';
+    })
+    .join(' ');
+}
+
 export default function LeaderboardTable({ showRefresh = true }) {
   const [columns, setColumns] = useState([]);
   const [entries, setEntries] = useState([]);
