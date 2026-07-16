@@ -32,9 +32,7 @@ export default function SubmissionPage({ onBack }) {
           let message = 'Could not load latest PDF.';
           try {
             const errorData = await response.json();
-            if (errorData?.details) {
-              message = errorData.details;
-            } else if (errorData?.error) {
+            if (errorData?.error) {
               message = errorData.error;
             }
           } catch (parseError) {
@@ -97,7 +95,7 @@ export default function SubmissionPage({ onBack }) {
         let message = 'Failed to send submission.';
         try {
           const errorData = await response.json();
-          message = errorData?.details || errorData?.error || message;
+          message = errorData?.error || message;
         } catch (parseError) {
           // Keep fallback message when response is not JSON.
         }

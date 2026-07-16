@@ -179,10 +179,10 @@ app.get('/api/latest-pdf', async (req, res) => {
 
     return res.json(latestPdf);
   } catch (error) {
+    console.error('Failed to fetch latest PDF from Google Drive:', error);
     const statusCode = error.statusCode || 500;
     return res.status(statusCode).json({
-      error: 'Failed to fetch latest PDF from Google Drive.',
-      details: error.message
+      error: 'Failed to fetch latest PDF from Google Drive.'
     });
   }
 });
@@ -210,10 +210,10 @@ app.get('/api/latest-pdf/content', async (req, res) => {
     res.setHeader('Content-Disposition', `inline; filename="${latestPdf.name || 'question.pdf'}"`);
     fileResponse.data.pipe(res);
   } catch (error) {
+    console.error('Failed to stream latest PDF from Google Drive:', error);
     const statusCode = error.statusCode || 500;
     res.status(statusCode).json({
-      error: 'Failed to stream latest PDF from Google Drive.',
-      details: error.message
+      error: 'Failed to stream latest PDF from Google Drive.'
     });
   }
 });
@@ -248,9 +248,9 @@ app.post('/api/submissions', async (req, res) => {
 
     return res.status(201).json({ ok: true });
   } catch (error) {
+    console.error('Failed to send submission email:', error);
     return res.status(500).json({
-      error: 'Failed to send submission email.',
-      details: error.message
+      error: 'We could not send your submission right now. Please try again later.'
     });
   }
 });
@@ -260,16 +260,15 @@ app.get('/api/leaderboard', async (req, res) => {
     const { columns, entries } = await getLeaderboardFromSheet();
     return res.json({ columns, entries });
   } catch (error) {
+    console.error('Failed to fetch leaderboard from Google Sheets:', error);
     const isForbidden = error.code === 403 || error.response?.status === 403;
     const statusCode = isForbidden ? 403 : (error.statusCode || 500);
     const serviceEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || 'your service account email';
-    const details = isForbidden
-      ? `Share the LEADERBOARD Google Sheet with ${serviceEmail} as Viewer (not only the Drive folder).`
-      : error.message;
-    return res.status(statusCode).json({
-      error: 'Failed to fetch leaderboard from Google Sheets.',
-      details
-    });
+    const response = { error: 'Failed to fetch leaderboard from Google Sheets.' };
+    if (isForbidden) {
+      response.details = `Share the LEADERBOARD Google Sheet with ${serviceEmail} as Viewer (not only the Drive folder).`;
+    }
+    return res.status(statusCode).json(response);
   }
 });
 
