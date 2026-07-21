@@ -105,11 +105,47 @@ function buildEmailTransport() {
     host: requireEnv('SMTP_HOST'),
     port: Number(process.env.SMTP_PORT || 587),
     secure: String(process.env.SMTP_SECURE || 'false') === 'true',
+    requireTLS: String(process.env.SMTP_SECURE || 'false') !== 'true',
     auth: {
       user: requireEnv('SMTP_USER'),
       pass: requireEnv('SMTP_PASS')
     }
   });
+}
+
+function buildSubmissionMailOptions({ name, email, solution, latexMode }) {
+  const mailTo = process.env.SUBMISSION_TO_EMAIL || 'acascompetitions.unswmathsoc@gmail.com';
+  const fromEmail = process.env.SUBMISSION_FROM_EMAIL || requireEnv('SMTP_USER');
+  const submittedAt = formatSubmittedAt();
+
+  return {
+    from: fromEmail,
+    to: mailTo,
+    cc: email.trim() ? email.trim() : undefined,
+    subject: `Puzzle Submission - ${name.trim() || 'Anonymous'}`,
+    text: [
+      `Submitted At: ${submittedAt}`,
+      `Name: ${name.trim() || 'Not provided'}`,
+      `Email: ${email.trim() || 'Not provided'}`,
+      `LaTeX mode: ${latexMode ? 'yes' : 'no'}`,
+      '',
+      'Solution:',
+      solution.trim()
+    ].join('\n')
+  };
+}
+
+async function sendSubmissionEmail({ name, email, solution, latexMode }) {
+  const mailOptions = buildSubmissionMailOptions({ name, email, solution, latexMode });
+
+  if (process.env.SUBMISSIONS_LOG_ONLY === 'true') {
+    // eslint-disable-next-line no-console
+    console.log('[submissions] SUBMISSIONS_LOG_ONLY=true — logged instead of emailed:', mailOptions);
+    return;
+  }
+
+  const transporter = buildEmailTransport();
+  await transporter.sendMail(mailOptions);
 }
 
 function formatSubmittedAt(date = new Date()) {
@@ -225,30 +261,17 @@ app.post('/api/submissions', async (req, res) => {
       return res.status(400).json({ error: 'Solution is required.' });
     }
 
-    const mailTo = process.env.SUBMISSION_TO_EMAIL || 'acascompetitions.unswmathsoc@gmail.com';
-    const fromEmail = process.env.SUBMISSION_FROM_EMAIL || requireEnv('SMTP_USER');
-    const transporter = buildEmailTransport();
-    const submittedAt = formatSubmittedAt();
-
-    await transporter.sendMail({
-      from: fromEmail,
-      to: mailTo,
-      cc: email.trim() ? email.trim() : undefined,
-      subject: `Puzzle Submission - ${name.trim() || 'Anonymous'}`,
-      text: [
-        `Submitted At: ${submittedAt}`,
-        `Name: ${name.trim() || 'Not provided'}`,
-        `Email: ${email.trim() || 'Not provided'}`,
-        `LaTeX mode: ${latexMode ? 'yes' : 'no'}`,
-        '',
-        'Solution:',
-        solution.trim()
-      ].join('\n')
-    });
+    await sendSubmissionEmail({ name, email, solution, latexMode });
 
     return res.status(201).json({ ok: true });
   } catch (error) {
     console.error('Failed to send submission email:', error);
+    if (error.code === 'EAUTH') {
+      return res.status(500).json({
+        error:
+          'Email login failed. For Gmail, use an App Password (not your normal password) in SMTP_PASS. For local testing, set SUBMISSIONS_LOG_ONLY=true in .env.'
+      });
+    }
     return res.status(500).json({
       error: 'We could not send your submission right now. Please try again later.'
     });
